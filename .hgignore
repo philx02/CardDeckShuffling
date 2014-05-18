@@ -1,0 +1,6 @@
+syntax: glob
+Release/
+*.csv
+*.sdf
+Debug/
+*.suo
