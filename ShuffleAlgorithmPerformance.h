@@ -1,15 +1,22 @@
 #include <string>
+#include <vector>
 
 class ShuffleAlgorithmPerformance
 {
 public:
-  ShuffleAlgorithmPerformance(std::string iAlgorithmName, double iMeanOfMeans, double iStdDevOfMeans, double iMeanOfStdDevs, double iStdDevOfStdDevs)
+  ShuffleAlgorithmPerformance(std::string iAlgorithmName, double iMeanOfMeans, double iStdDevOfMeans, double iMeanOfStdDevs, double iStdDevOfStdDevs, std::vector< std::vector< std::size_t > > &&iCardOccurenceCounter)
     : mAlgorithmName(std::move(iAlgorithmName))
     , mMeanOfMeans(iMeanOfMeans)
     , mStdDevOfMeans(iStdDevOfMeans)
     , mMeanOfStdDevs(iMeanOfStdDevs)
     , mStdDevOfStdDevs(iStdDevOfStdDevs)
+    , mCardOccurenceCounter(std::move(iCardOccurenceCounter))
   {}
+
+  const std::string &getName() const
+  {
+    return mAlgorithmName;
+  }
 
   static void printTitles(std::ostream &oStream)
   {
@@ -21,6 +28,18 @@ public:
     oStream << std::endl;
   }
 
+  void dumpCardOccurences(std::ostream &oStream) const
+  {
+    for (const auto &iRow : mCardOccurenceCounter)
+    {
+      for (const auto &iCell : iRow)
+      {
+        oStream << iCell << ',';
+      }
+      oStream << '\n';
+    }
+  }
+
 private:
   friend std::ostream & operator<<(std::ostream &, const ShuffleAlgorithmPerformance &);
   std::string mAlgorithmName;
@@ -28,6 +47,7 @@ private:
   double mStdDevOfMeans;
   double mMeanOfStdDevs;
   double mStdDevOfStdDevs;
+  std::vector< std::vector< std::size_t > > mCardOccurenceCounter;
 };
 
 std::ostream & operator<<(std::ostream &oStream, const ShuffleAlgorithmPerformance &iShuffleAlgorithmPerformance)
@@ -53,6 +73,7 @@ ShuffleAlgorithmPerformance testRandomShuffle(const std::string &iAlgorithmName,
   wDeck.reserve(sDeckSize);
 
   std::vector< ba::accumulator_set< std::size_t, ba::stats< ba::tag::variance > > > wVectorOfAccumulators(sDeckSize);
+  std::vector< std::vector< std::size_t > > wCardOccurenceCounter(sDeckSize, std::vector< std::size_t >(sDeckSize, 0));
 
   for (std::size_t wIteration = 0; wIteration < sNumberOfIterations; ++wIteration)
   {
@@ -60,6 +81,11 @@ ShuffleAlgorithmPerformance testRandomShuffle(const std::string &iAlgorithmName,
     iShuffleAlgo(std::begin(wDeck), std::end(wDeck), iRandomNumberGenerator);
     auto wAccumulatorIter = std::begin(wVectorOfAccumulators);
     std::for_each(std::begin(wDeck), std::end(wDeck), [&](decltype(*std::begin(wDeck)) && iCardId) {(*(wAccumulatorIter++))(iCardId); });
+    auto wCardOccurenceCounterIter = wCardOccurenceCounter.begin();
+    for (const auto &wCardId : wDeck)
+    {
+      ++(wCardOccurenceCounterIter++)->at(wCardId);
+    }
   }
 
   ba::accumulator_set< std::size_t, ba::stats< ba::tag::variance > > wMeanAccumulator;
@@ -71,5 +97,5 @@ ShuffleAlgorithmPerformance testRandomShuffle(const std::string &iAlgorithmName,
     wStdDevAccumulator(std::sqrt(ba::variance(wAccumulator)));
   }
 
-  return ShuffleAlgorithmPerformance(iAlgorithmName, ba::mean(wMeanAccumulator), std::sqrt(ba::variance(wMeanAccumulator)), ba::mean(wStdDevAccumulator), std::sqrt(ba::variance(wStdDevAccumulator)));
+  return ShuffleAlgorithmPerformance(iAlgorithmName, ba::mean(wMeanAccumulator), std::sqrt(ba::variance(wMeanAccumulator)), ba::mean(wStdDevAccumulator), std::sqrt(ba::variance(wStdDevAccumulator)), std::move(wCardOccurenceCounter));
 }
