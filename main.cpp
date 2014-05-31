@@ -57,7 +57,7 @@ int main()
   wShuffleAlgorithmPerformances.emplace_back(testRandomShuffle("sorted", wRandomNumberGenerator, [](std::vector< std::size_t >::iterator iBegin, std::vector< std::size_t >::iterator iEnd, decltype(wRandomNumberGenerator) & iRandomNumberGenerator)
   {
   }));
-  wShuffleAlgorithmPerformances.emplace_back(testRandomShuffle("std::shuffle (computerized)", wRandomNumberGenerator, [](std::vector< std::size_t >::iterator iBegin, std::vector< std::size_t >::iterator iEnd, decltype(wRandomNumberGenerator) & iRandomNumberGenerator)
+  wShuffleAlgorithmPerformances.emplace_back(testRandomShuffle("std_shuffle (computerized)", wRandomNumberGenerator, [](std::vector< std::size_t >::iterator iBegin, std::vector< std::size_t >::iterator iEnd, decltype(wRandomNumberGenerator) & iRandomNumberGenerator)
   {
     std::shuffle(iBegin, iEnd, iRandomNumberGenerator);
   }));
@@ -77,6 +77,9 @@ int main()
   for (const auto &iShuffleAlgorithmPerformance : wShuffleAlgorithmPerformances)
   {
     wCsvResults << iShuffleAlgorithmPerformance;
+    std::ofstream wCardOccurence(iShuffleAlgorithmPerformance.getName() + ".csv");
+    iShuffleAlgorithmPerformance.dumpCardOccurences(wCardOccurence);
+    wCardOccurence.close();
   }
   wCsvResults.close();
 
